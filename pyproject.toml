@@ -4,10 +4,24 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hoymiles-g3-modbus-tcp"
-version = "0.1.0"
-description = "Async async read/decode of Hoymiles G3 hybrid inverter live telemetry over Modbus TCP"
+version = "0.1.1"
+description = "Async read/decode of Hoymiles G3 hybrid inverter live telemetry over Modbus TCP"
+readme = "README.md"
+license = { text = "MIT" }
 requires-python = ">=3.11"
-dependencies = ["pymodbus>=3.15"]
+keywords = ["hoymiles", "modbus", "inverter", "hybrid-inverter", "solar", "asyncio"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Framework :: AsyncIO",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Home Automation",
+    "Operating System :: OS Independent",
+]
+dependencies = ["pymodbus>=3.13.1"]
 
 [tool.setuptools]
 packages = ["hoymiles_g3_modbus_tcp"]
