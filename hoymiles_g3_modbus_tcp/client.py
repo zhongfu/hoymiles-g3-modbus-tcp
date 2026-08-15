@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from pymodbus.client import AsyncModbusTcpClient
+from pymodbus.exceptions import ConnectionException
 
 
 class ModbusReadError(Exception):
@@ -23,20 +24,32 @@ class HoymilesClient:
         await self._client.connect()
 
     async def read_input(self, addr: int, count: int) -> list[int]:
-        rr = await self._client.read_input_registers(
-            addr, count=count, device_id=self._unit
-        )
+        return await self._transact(self._client.read_input_registers, addr, count)
+
+    async def read_holding(self, addr: int, count: int) -> list[int]:
+        return await self._transact(self._client.read_holding_registers, addr, count)
+
+    async def _transact(self, rfn, addr: int, count: int) -> list[int]:
+        """Run one register read, reconnecting on a dropped session.
+
+        If pymodbus reports the connection as lost, close + reconnect and
+        retry the read once. A real Modbus error (``ModbusReadError``) or a
+        second connection failure propagates to the caller.
+        """
+        try:
+            rr = await rfn(addr, count=count, device_id=self._unit)
+        except ConnectionException:
+            await self._reconnect()
+            rr = await rfn(addr, count=count, device_id=self._unit)
         if rr.isError():
             raise ModbusReadError(addr, count, str(rr))
         return list(rr.registers)
 
-    async def read_holding(self, addr: int, count: int) -> list[int]:
-        rr = await self._client.read_holding_registers(
-            addr, count=count, device_id=self._unit
-        )
-        if rr.isError():
-            raise ModbusReadError(addr, count, str(rr))
-        return list(rr.registers)
+    async def _reconnect(self) -> None:
+        self._client.close()
+        connected = await self._client.connect()
+        if not connected:
+            raise ConnectionException("reconnect failed")
 
     async def close(self) -> None:
         self._client.close()
