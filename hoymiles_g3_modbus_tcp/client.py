@@ -30,5 +30,13 @@ class HoymilesClient:
             raise ModbusReadError(addr, count, str(rr))
         return list(rr.registers)
 
+    async def read_holding(self, addr: int, count: int) -> list[int]:
+        rr = await self._client.read_holding_registers(
+            addr, count=count, device_id=self._unit
+        )
+        if rr.isError():
+            raise ModbusReadError(addr, count, str(rr))
+        return list(rr.registers)
+
     async def close(self) -> None:
         self._client.close()

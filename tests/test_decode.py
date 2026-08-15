@@ -22,6 +22,11 @@ class TestDecodeWords(unittest.TestCase):
     def test_f32_zero(self):
         self.assertEqual(decode_words([0, 0], "F32"), 0.0)
 
+    def test_i32r_reversed_word_order(self):
+        # Low word stored first (register addr), high word at addr+1.
+        self.assertEqual(decode_words([50, 0], "I32R"), 50)
+        self.assertEqual(decode_words([0x0000, 0xFFFF], "I32R"), -65536)
+
     def test_f32_known(self):
         # 0x3F800000 == 1.0
         self.assertEqual(decode_words([0x3F80, 0x0000], "F32"), 1.0)

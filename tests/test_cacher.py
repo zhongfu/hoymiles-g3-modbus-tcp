@@ -39,5 +39,29 @@ class TestComputedTotals(unittest.TestCase):
         )
 
 
+    def test_enum_maps_known_value_to_label(self):
+        self.cache.update({0: 3})
+        self.assertEqual(
+            self.cache.value(REGISTERS_BY_KEY["workstatus"]), "Grid on"
+        )
+
+    def test_enum_unknown_value_passes_through(self):
+        self.cache.update({0: 99})
+        self.assertEqual(self.cache.value(REGISTERS_BY_KEY["workstatus"]), 99)
+
+    def test_bitmap_returns_matched_labels(self):
+        # battery_faults (30021, H32): value 1 -> bit0, 1<<8 -> bit8.
+        self.cache.update({30021: 0, 30022: (1 | (1 << 8))})
+        self.assertEqual(
+            self.cache.value(REGISTERS_BY_KEY["battery_faults"]),
+            ["Low battery voltage", "High HV input voltage"],
+        )
+
+    def test_bitmap_clear_returns_empty_list(self):
+        self.cache.update({30021: 0, 30022: 0})
+        self.assertEqual(
+            self.cache.value(REGISTERS_BY_KEY["battery_faults"]), []
+        )
+
 if __name__ == "__main__":
     unittest.main()

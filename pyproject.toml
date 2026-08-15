@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hoymiles-g3-modbus-tcp"
-version = "0.1.2"
+version = "0.2.0"
 description = "Async read/decode of Hoymiles G3 hybrid inverter live telemetry over Modbus TCP"
 readme = "README.md"
 license = { text = "MIT" }

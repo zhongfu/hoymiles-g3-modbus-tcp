@@ -6,6 +6,7 @@ import asyncio
 from .cacher import RegisterCache
 from .client import HoymilesClient, ModbusReadError
 from .config import InverterConfig, detect_config
+from .groups import GROUPS
 from .readplan import build_read_plan
 from .registers import REGISTERS, REGISTERS_BY_ADDR, REGISTERS_BY_KEY
 
@@ -80,21 +81,42 @@ class Inverter:
         self._info = info
         return info
 
-    async def poll(self) -> dict:
+    async def _read_ranges(self, ranges, read_fn) -> dict:
+        raw = {}
+        for addr, count in build_read_plan(ranges, self._config.max_block):
+            try:
+                words = await read_fn(addr, count)
+            except ModbusReadError:
+                words = [None] * count
+            for i, v in enumerate(words):
+                raw[addr + i] = v
+        return raw
+
+    async def poll_group(self, name: str) -> dict:
+        """Read one named register group and return a full snapshot.
+
+        Unread registers (and computed totals over unread parts) come back as
+        ``None`` until a group that reads them is polled.
+        """
+        try:
+            in_ranges, hold_ranges = GROUPS[name]
+        except KeyError:
+            raise ValueError(f"unknown poll group {name!r}") from None
         async with self._lock:
-            raw = {}
-            for addr, count in build_read_plan(
-                self._config.poll_ranges, self._config.max_block
-            ):
-                try:
-                    words = await self._client.read_input(addr, count)
-                    for i, v in enumerate(words):
-                        raw[addr + i] = v
-                except ModbusReadError:
-                    for i in range(count):
-                        raw.setdefault(addr + i, None)
+            raw = await self._read_ranges(in_ranges, self._client.read_input)
+            raw.update(
+                await self._read_ranges(hold_ranges, self._client.read_holding)
+            )
             self._cache.update(raw)
         return self.snapshot()
+
+    async def poll_all(self) -> dict:
+        """Read every register group (input + holding) and return a snapshot."""
+        return await self.poll_group("all")
+
+    async def poll(self) -> dict:
+        """Alias for :meth:`poll_all` (reads everything)."""
+        return await self.poll_all()
 
     def read(self, key):
         reg = REGISTERS_BY_KEY.get(key)
@@ -146,6 +168,15 @@ class Inverter:
     @property
     def ac(self):
         return self._view("ac")
+
+    @property
+    def status(self):
+        return self._view("status")
+
+    @property
+    def settings(self):
+        return self._view("settings")
+
 
     @property
     def generator(self):

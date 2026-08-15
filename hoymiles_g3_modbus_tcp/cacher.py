@@ -36,4 +36,9 @@ class RegisterCache:
         words = self.words(reg)
         if any(w is None for w in words):
             return None
-        return decode_words(words, reg.dtype, reg.scale)
+        v = decode_words(words, reg.dtype, reg.scale)
+        if reg.enum is not None and isinstance(v, int):
+            return reg.enum.get(v, v)
+        if reg.bitmap is not None and isinstance(v, int):
+            return [label for bit, label in sorted(reg.bitmap.items()) if v & (1 << bit)]
+        return v

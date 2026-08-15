@@ -12,9 +12,15 @@ def decode_words(words, dtype, scale=1.0) -> int | float:
         v = words[0]
         if dtype == "I16" and v >= 0x8000:
             v -= 0x10000
-    elif dtype in ("I32", "H32", "F32"):
+    elif dtype in ("I32", "H32", "F32", "I32R"):
         if dtype == "F32":
             v = struct.unpack(">f", struct.pack(">HH", words[0], words[1]))[0]
+        elif dtype == "I32R":
+            # Reversed 32-bit: the LOW word is stored first (register addr),
+            # the HIGH word at addr+1. Used by register 30017 (smart load).
+            v = (words[1] << 16) | words[0]
+            if v >= 0x80000000:
+                v -= 0x100000000
         else:
             v = (words[0] << 16) | words[1]
             if dtype == "I32" and v >= 0x80000000:
@@ -24,7 +30,6 @@ def decode_words(words, dtype, scale=1.0) -> int | float:
     if scale == 1.0:
         return v
     return v / scale
-
 
 def decode_ascii_string(words, byte_swap=True) -> str:
     """Decode a byte-swapped ASCII string from a list of 16-bit words.
