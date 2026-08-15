@@ -17,6 +17,7 @@ class InverterConfig:
     max_block: int = 123
     poll_ranges: tuple = DEFAULT_RANGES
     holding_ranges: tuple = DEFAULT_HOLDING_RANGES
+    read_retries: int = 3
 
 
 

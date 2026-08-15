@@ -232,6 +232,10 @@ raw word of a computed measurement (`inv.raw(...)`) returns `None`.
 - **Read-only, including settings.** All registers (including EMS/settings) are only
   read, never written.
 - **One connection at a time.** Don't run two copies polling the same inverter at once.
+- **Bad-read detection.** A block read that decodes to an obviously-ridiculous value
+  (e.g. SoC 2005%, 1000 V) is re-read up to `read_retries` times (default 3) before the
+  value is kept. Bounds are generous physical limits, so out-of-spec but plausible
+  readings (e.g. 15200 W on a 15 kW unit) are not affected.
 
 ---
 

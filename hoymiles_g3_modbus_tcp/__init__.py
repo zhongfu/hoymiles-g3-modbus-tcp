@@ -1,6 +1,6 @@
 """Hoymiles G3 hybrid inverter — async Modbus-TCP telemetry reader."""
 
-__version__ = "0.2.2"
+__version__ = "0.2.3"
 
 from .decode import decode_ascii_string, decode_words
 from .registers import Register

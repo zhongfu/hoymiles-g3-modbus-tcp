@@ -9,6 +9,10 @@ from .config import InverterConfig, detect_config
 from .groups import GROUPS
 from .readplan import build_read_plan
 from .registers import REGISTERS, REGISTERS_BY_ADDR, REGISTERS_BY_KEY
+from .validation import block_is_plausible
+
+
+_READ_RETRY_SLEEP = 0.05  # module constant
 
 
 class DomainView:
@@ -83,12 +87,24 @@ class Inverter:
 
     async def _read_ranges(self, ranges, read_fn) -> dict:
         raw = {}
+        retries = max(1, self._config.read_retries)
         for addr, count in build_read_plan(ranges, self._config.max_block):
-            try:
-                words = await read_fn(addr, count)
-            except ModbusReadError:
-                words = [None] * count
-            for i, v in enumerate(words):
+            words = None
+            for attempt in range(retries):
+                try:
+                    words = await read_fn(addr, count)
+                except ModbusReadError:
+                    words = [None] * count
+                    if attempt == retries - 1:
+                        break
+                    await asyncio.sleep(_READ_RETRY_SLEEP)
+                    continue
+                if block_is_plausible(addr, count, words):
+                    break
+                if attempt == retries - 1:
+                    break
+                await asyncio.sleep(_READ_RETRY_SLEEP)
+            for i, v in enumerate(words or []):
                 raw[addr + i] = v
         return raw
 
