@@ -128,6 +128,15 @@ class Inverter:
             return None
         return self._cache.raw_addr(reg.addr)
 
+    def last_updated(self, key) -> float | None:
+        """Wall-clock epoch seconds of the last successful read of ``key``.
+
+        Returns ``None`` for an unknown key or a register never read (or, for a
+        derived total, any of whose source components were never read).
+        """
+        reg = REGISTERS_BY_KEY.get(key)
+        return None if reg is None else self._cache.last_update(reg)
+
     def __getitem__(self, key):
         return self.read(key)
 

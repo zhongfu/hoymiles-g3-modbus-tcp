@@ -1,8 +1,8 @@
+import time
 import unittest
 
 from hoymiles_g3_modbus_tcp.cacher import RegisterCache
 from hoymiles_g3_modbus_tcp.registers import REGISTERS_BY_ADDR, REGISTERS_BY_KEY
-
 
 class TestComputedTotals(unittest.TestCase):
     def setUp(self):
@@ -61,6 +61,36 @@ class TestComputedTotals(unittest.TestCase):
         self.cache.update({30021: 0, 30022: 0})
         self.assertEqual(
             self.cache.value(REGISTERS_BY_KEY["battery_faults"]), []
+        )
+
+    def test_last_update_tracks_successful_reads(self):
+        before = time.time()
+        self.cache.update({29: 100})
+        ts = self.cache.last_update(REGISTERS_BY_KEY["pv1_power"])
+        self.assertIsNotNone(ts)
+        self.assertGreaterEqual(ts, before)
+
+    def test_last_update_none_until_read(self):
+        self.assertIsNone(self.cache.last_update(REGISTERS_BY_KEY["pv1_power"]))
+
+    def test_failed_read_keeps_value_and_timestamp(self):
+        self.cache.update({29: 5})
+        ts1 = self.cache.last_update(REGISTERS_BY_KEY["pv1_power"])
+        self.cache.update({29: None})
+        # A failed read neither advances freshness nor wipes the last good value.
+        self.assertEqual(
+            self.cache.last_update(REGISTERS_BY_KEY["pv1_power"]), ts1
+        )
+        self.assertEqual(self.cache.value(REGISTERS_BY_KEY["pv1_power"]), 5)
+
+
+    def test_derived_last_update_requires_all_components(self):
+        self.assertIsNone(
+            self.cache.last_update(REGISTERS_BY_KEY["pv_total_power"])
+        )
+        self.cache.update({29: 100, 32: 200, 35: 50, 38: 50})
+        self.assertIsNotNone(
+            self.cache.last_update(REGISTERS_BY_KEY["pv_total_power"])
         )
 
 if __name__ == "__main__":
