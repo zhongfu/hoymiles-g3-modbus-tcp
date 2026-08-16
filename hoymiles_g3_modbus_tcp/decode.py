@@ -12,7 +12,7 @@ def decode_words(words, dtype, scale=1.0) -> int | float:
         v = words[0]
         if dtype == "I16" and v >= 0x8000:
             v -= 0x10000
-    elif dtype in ("I32", "H32", "F32", "I32R"):
+    elif dtype in ("I32", "H32", "F32", "I32R", "U32"):
         if dtype == "F32":
             v = struct.unpack(">f", struct.pack(">HH", words[0], words[1]))[0]
         elif dtype == "I32R":

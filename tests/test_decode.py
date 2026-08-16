@@ -16,6 +16,12 @@ class TestDecodeWords(unittest.TestCase):
     def test_h32(self):
         self.assertEqual(decode_words([0x0000, 0x0100], "H32"), 256)
 
+    def test_u32(self):
+        # High bit set must NOT wrap negative (lifetime energy counter).
+        self.assertEqual(decode_words([0x8000, 0x0000], "U32"), 0x80000000)
+        self.assertEqual(decode_words([0xFFFF, 0xFFFF], "U32"), 0xFFFFFFFF)
+        self.assertEqual(decode_words([0x0000, 0x0100], "U32"), 256)
+
     def test_scale_after_decode(self):
         self.assertEqual(decode_words([540], "U16", 10), 54.0)
 

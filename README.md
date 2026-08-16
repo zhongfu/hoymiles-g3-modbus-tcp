@@ -3,8 +3,8 @@
 *AI slop disclaimer: this thing was written by deepseek-v4-flash-0731 with input from me.*
 
 A small Python library for reading live telemetry from a **Hoymiles G3 hybrid inverter**
-(HIT-G3 series, e.g. HIT-15L-G3) over Modbus TCP, asynchronously. It talks to the
-DTS-WL-G3 stick that connects the inverter to your network.
+(HIT-xxL-G3 series) over Modbus TCP, asynchronously. It talks to the DTS-WL-G3 stick that
+connects the inverter to your network.
 
 The library knows the full register map of the inverter, reads all of it in a few large
 bursts, and hands you live numbers as normal Python values.
@@ -18,7 +18,7 @@ It is currently **read-only**, and never writes to the inverter.
 This library has **only been tested against one combination of hardware**:
 
 - **Inverter:** Hoymiles **HIT-15L-G3**
-- **Batteries:** 2 × Hoymiles **LB-16D-G3** (~32 kWh total)
+- **Batteries:** 2 × Hoymiles **LB-16D-G3**
 - **Data transfer stick:** Hoymiles **DTS-WL-G3**
 
 It *should* work with other G3 hybrid inverters, but other combinations are unverified
